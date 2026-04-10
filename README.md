@@ -45,7 +45,7 @@ A full-replacement iOS custom keyboard with on-device voice dictation, live part
 - Xcode 16 or later
 - iOS 26.4 SDK (deployment target 26.4)
 - A real device for on-device dictation (the Simulator can type but cannot do speech recognition)
-- Apple Developer account for code signing (default team is `6J7Z474QUR` — change in project settings)
+- Apple Developer account for code signing (change the team in project settings)
 
 ## How to Run / Install
 
@@ -275,7 +275,7 @@ Tradeoff: English-only in this demo (the recognizer is pinned to `en-US`). For m
 - **Grapheme-cluster delete** — live partial replacement uses `String.count` to count deletes, which works for English but can drift for combining marks, emoji ZWJ sequences, or complex scripts.
 - **No secure-field handling** — the keyboard doesn't check `proxy.isSecureTextEntry` before starting dictation. A production version would refuse dictation in password fields.
 - **Simulator can't dictate** — `SFSpeechRecognizer` with `requiresOnDeviceRecognition = true` requires real-device hardware. The Simulator will show the keyboard UI but dictation will error out.
-- **Single development team** — `project.pbxproj` hardcodes `DEVELOPMENT_TEAM = 6J7Z474QUR`. You'll need to change it to your own team in all four targets (main app, keyboard, Live Activity widget, and config lists).
+- **Single development team** — `project.pbxproj` hardcodes a `DEVELOPMENT_TEAM`. You'll need to change it to your own team in all four targets (main app, keyboard, Live Activity widget, and config lists).
 
 ### Next steps
 
