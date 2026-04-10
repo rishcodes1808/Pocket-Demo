@@ -263,32 +263,6 @@ Tradeoff: we can't do backpressure or reliable ordering. Mitigated with deduplic
 
 Tradeoff: English-only in this demo (the recognizer is pinned to `en-US`). For multilingual, you'd pipe the user's preferred locale into `SFSpeechRecognizer(locale:)` and duplicate the permission messaging. Accuracy is a notch below Whisper-cloud for proper nouns and mumbled speech, but the on-device latency and privacy win matters more for a keyboard.
 
-### Why silence is detected via partial-result gaps instead of audio RMS
-
-Audio-level thresholding is fiddly: background noise, breath noise, and mic calibration all shift the baseline. `SFSpeechRecognizer` already makes this distinction internally — it only emits partial results while it's confident the audio contains speech. Tracking `lastPartialAt` and comparing to a 3-second window is more reliable than rolling an RMS window, and it reuses work the recognizer is already doing.
-
-Tradeoff: if the recognizer drops a partial mid-speech (rare), we could mis-fire. Mitigated by only starting the silence check after `hasDetectedFirstSpeech = true` and by being conservative (3 s, not 1 s).
-
-### Why partial text is inserted live into the field instead of previewed in the banner
-
-The screenshot-driven requirement is that dictated text should appear inline as you speak — matching iOS's own dictation and what users already expect. Previewing in a banner is easier to implement (no delete-and-reinsert dance) but feels sluggish because the text "jumps" into the field only when you tap Done.
-
-The tradeoff is that every partial update does `N × proxy.deleteBackward()` followed by `proxy.insertText(newPartial)`. For English, grapheme count matches the number of `deleteBackward` calls needed, so this is safe. Each delete+insert cycle is fast enough (~1 ms) that it's imperceptible, even for long partials.
-
-For text with combining characters, emoji sequences, or complex scripts, grapheme counting could drift. The demo is English-only so this doesn't bite, but a production version would track a snapshot of the cursor position via `documentContextBeforeInput` and replace by byte range instead.
-
-### Why the main app display name is "Pocket Keyboard"
-
-iOS's keyboard switcher shows `<KeyboardExtensionName> — <MainAppName>` when the two differ, and collapses to just `<Name>` when they match. Setting `CFBundleDisplayName` on the main app to `Pocket Keyboard` (matching the extension's `INFOPLIST_KEY_CFBundleDisplayName`) avoids the ugly "Pocket Keyboard — Pocket Demo" suffix in the system switcher.
-
-Tradeoff: the home-screen icon also reads "Pocket Keyboard" now, which is arguably fine for this demo — the main app is a setup/preview shell for the keyboard, not a standalone product.
-
-### Why `TranscriptionActivityAttributes` is duplicated instead of shared via a framework
-
-Xcode 16's file-system-sync groups can include the same folder in multiple targets (which is how `Shared/` works for the main app + keyboard extension), but the widget extension has a genuinely different dependency footprint — it doesn't need the ~15 keyboard UI files. Creating a separate `SharedWidget/` synced group for 3 files is more overhead than just duplicating them.
-
-The `activityAttributesName` static override ensures `ActivityKit` matches the duplicated types across modules. This is a well-known trick used by apps that don't want to spin up a Swift package just for a 50-line data model.
-
 ## Known Limitations / Next Steps
 
 ### Current limitations
